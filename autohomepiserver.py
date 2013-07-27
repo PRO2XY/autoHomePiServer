@@ -43,14 +43,17 @@ while 1:
 	for x in range(0,rows):
 		row = cursor.fetchone()
 		pin_no = int(row[3])
-		pin_state = 0 if(row[1]=="on") else 1 #Inverting logic as we will be pulling uln2803 low to activate relay
-		if(row[2]=="disabled" or row[2]=="Disabled"):
-			GPIO.setup(pin_no, GPIO.IN)	# Set as input to avoid accidental short
-			print "|\t",pin_no,"\tdisabled\t|"
+		if pin_no in [11, 12, 13, 15, 16]:
+			pin_state = 0 if(row[1]=="on") else 1 #Inverting logic as we will be pulling uln2803 low to activate relay
+			if(row[2]=="disabled" or row[2]=="Disabled"):
+				GPIO.setup(pin_no, GPIO.IN)	# Set as input to avoid accidental short
+				print "|\t",pin_no,"\tdisabled\t|"
+			else:
+				print "|\t",pin_no,"\t",pin_state,"\t\t|"
+				GPIO.setup(pin_no, GPIO.OUT)
+				GPIO.output(pin_no, pin_state)
 		else:
-			print "|\t",pin_no,"\t",pin_state,"\t\t|"
-			GPIO.setup(pin_no, GPIO.OUT)
-			GPIO.output(pin_no, pin_state)
+			print "pin_no \'",pin_no, "\' not in valid range [11, 12, 13, 15, 16]"
 	print "================================="
 	cursor.close()
 	db.close()
