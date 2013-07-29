@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # Script created by Pranav Sharma (pranavsharma2504@gmail.com)
 # Initial version created on 27th July 2013 : 00:18 IST
-# Current Version: 0.10.2
-# Version Date: 27-07-2013 07:09
+# Current Version: 0.10.3
+# Version Date: 29-07-2013 18:29
 
 # NOTE: Following are required to be installed on your
 # system in order for this script to work as intended:
@@ -13,7 +13,7 @@
 
 ### USER EDITABLES
 CONFIGFILE = "config" #without extension
-REFRESHTIME = 5 #seconds
+REFRESHTIME = 1 #seconds
 ### USER EDITABLES END
 import time
 try:
@@ -44,7 +44,7 @@ while 1:
 		row = cursor.fetchone()
 		pin_no = int(row[3])
 		if pin_no in [11, 12, 13, 15, 16]:
-			pin_state = 0 if(row[1]=="on") else 1 #Inverting logic as we will be pulling uln2803 low to activate relay
+			pin_state = 1 if(row[1]=="on") else 0 # Active HIGH output
 			if(row[2]=="disabled" or row[2]=="Disabled"):
 				GPIO.setup(pin_no, GPIO.IN)	# Set as input to avoid accidental short
 				print "|\t",pin_no,"\tdisabled\t|"
