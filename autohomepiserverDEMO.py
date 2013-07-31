@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # Script created by Pranav Sharma (pranavsharma2504@gmail.com)
 # Initial version created on 31st July 2013 : 08:00 IST
-# Current Version: 0.11.0
-# Version Date: 31-07-2013 08:00
+# Current Version: 0.11.1
+# Version Date: 31-07-2013 23:16
 
 # NOTE: Following are required to be installed on your
 # system in order for this script to work as intended:
@@ -14,7 +14,7 @@
 
 ### USER EDITABLES
 CONFIGFILE = "config"  # without extension
-REFRESHTIME = 1  # seconds
+REFRESHTIME = 1.0  # seconds; Is overwritten by value from TABLE flags FROM DATABASE
 GPIO_PINS = [12, 11, 13, 15, 16]
 ### USER EDITABLES END
 import time
@@ -77,6 +77,9 @@ def check_flags():
         if(row[0] == "end_script"):
 	    global END_SCRIPT
             END_SCRIPT = int(row[1])
+	if(row[0] == "refresh_time"):
+	    global REFRESHTIME
+	    REFRESHTIME = float(row[1])
         # Check and update other flags here as well (if any)
         print "Flag ", row[0], ":", row[1]
     print ("----------------------")
@@ -164,43 +167,28 @@ def read_switches():
         switch_pin.append(int(row[3]))
         switch_state.append(1 if(row[1] == "on") else 0)  # Active HIGH output
         switch_enabled.append(1 if(row[2] != "Disabled" or row[2] != "disabled") else 0)
-        print "\t", row[0], "\t", row[3], "\t", row[1], "\t", row[2]
+        print "\t", row[0], "\t", row[3], "\t", row[1], "\t", "Enabled" if(row[2] != "Disabled" or row[2] != "disabled") else "Disabled"
     print "-----------------"
     cursor.close()
     db.close()
     for i in range(0, rows):
-        GPIO.setup(switch_pin[i], GPIO.OUT if(switch_enabled[i]) else GPIO.IN)
-        if(switch_enabled[i]):
-            GPIO.output(switch_pin[i], switch_state[i])
+	if(switch_enabled[i]):
+	    GPIO.setup(switch_pin[i], GPIO.OUT)
+	    GPIO.output(switch_pin[i], switch_state[i])
+        else:
+            GPIO.output(switch_pin[i], 0)
+	    GPIO.setup(switch_pin[i], GPIO.IN)
 # read_switches() ends
 
 check_flags()
-print "FLAGS ON INIT"
-print "DEMO:",DEMO
-print "DEMO_DELAY",DEMO_DELAY
-print "RUN_SERVER",RUN_SERVER
-print "END_SCRIPT",END_SCRIPT
-print "-----------------------"
 
 
 while (not END_SCRIPT):
     while(RUN_SERVER):
-        print "FLAGS FROM SERVER"
-	print "DEMO:",DEMO
-        print "DEMO_DELAY",DEMO_DELAY
-        print "RUN_SERVER",RUN_SERVER
-        print "END_SCRIPT",END_SCRIPT
-	print "-----------------------"
-
         # Running server
         while (DEMO):
-	    print "FLAGS FROM DEMO"
-            print "DEMO:",DEMO
-            print "DEMO_DELAY",DEMO_DELAY
-            print "RUN_SERVER",RUN_SERVER
-            print "END_SCRIPT",END_SCRIPT
-	    print "---------------------"
             # Running in Demo mode
+	    print "Demo Mode: ", DEMO
             for switch in GPIO_PINS:          # Set all used pins to output mode
                 GPIO.setup(switch, GPIO.OUT)
                 GPIO.output(switch, 0)
