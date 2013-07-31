@@ -37,10 +37,19 @@ except RuntimeError:
 GPIO.setwarnings(False)
 
 # Initialise flags
-DEMO = 0
-DEMO_DELAY = 1    # Seconds
-RUN_SERVER = 0
+global DEMO
+global DEMO_DELAY    # Seconds
+global RUN_SERVER
+global END_SCRIPT
+
+DEMO = 1
+DEMO_DELAY = 0.05
+RUN_SERVER = 1
 END_SCRIPT = 0
+
+global switch_pin
+global switch_state
+global switch_enabled
 
 switch_pin = []
 switch_state = []
@@ -52,20 +61,24 @@ def check_flags():
     cursor = db.cursor()
     cursor.execute("SELECT * FROM `flags`")
     rows = int(cursor.rowcount)
-    print ("Flags:")
+    print "Flags:"
     for i in range(0, rows):
         row = cursor.fetchone()
         if(row[0] == "run_server"):    # Check if server is to run
-            RUN_SERVER = int(row[1])
+            global RUN_SERVER    
+	    RUN_SERVER = int(row[1])
 
-        if(row[0] == "demo" and row[1] != 0):
-            DEMO = row[1]
+        if(row[0] == "demo"):
+            global DEMO
+	    DEMO = int(row[1])
         if(row[0] == "demo_delay"):
-            DEMO_DELAY = int(row[1]) / 100  # Database uses "seconds*100" scheme
+	    global DEMO_DELAY
+            DEMO_DELAY = float(row[1]) / 100.0  # Database uses "seconds*10" scheme
         if(row[0] == "end_script"):
+	    global END_SCRIPT
             END_SCRIPT = int(row[1])
         # Check and update other flags here as well (if any)
-        print ("Flag ", row[0], ":", row[1])
+        print "Flag ", row[0], ":", row[1]
     print ("----------------------")
     cursor.close()
     db.close()
@@ -138,36 +151,58 @@ def read_switches():
     cursor = db.cursor()
     cursor.execute("SELECT * FROM `switches`")
     rows = int(cursor.rowcount)
+    global switch_pin
+    global switch_state
+    global switch_enabled
     switch_pin = []
     switch_state = []
     switch_enabled = []
-    print ("Reading pins: ")
-    print ("\tSwitch\tPin\tValue\tStatus")
-    for i in rows:
+    print "Reading pins: "
+    print "\tSwitch\tPin\tValue\tStatus"
+    for i in range(0,rows):
         row = cursor.fetchone()
         switch_pin.append(int(row[3]))
         switch_state.append(1 if(row[1] == "on") else 0)  # Active HIGH output
         switch_enabled.append(1 if(row[2] != "Disabled" or row[2] != "disabled") else 0)
-        print (("\t", row[0], "\t", row[3], "\t", row[1], "\t", row[2]))
-    print("-----------------")
+        print "\t", row[0], "\t", row[3], "\t", row[1], "\t", row[2]
+    print "-----------------"
     cursor.close()
     db.close()
-    for i in rows:
-        GPIO.setmode(switch_pin[i], GPIO.OUT if(switch_enabled[i]) else GPIO.IN)
+    for i in range(0, rows):
+        GPIO.setup(switch_pin[i], GPIO.OUT if(switch_enabled[i]) else GPIO.IN)
         if(switch_enabled[i]):
             GPIO.output(switch_pin[i], switch_state[i])
 # read_switches() ends
 
 check_flags()
+print "FLAGS ON INIT"
+print "DEMO:",DEMO
+print "DEMO_DELAY",DEMO_DELAY
+print "RUN_SERVER",RUN_SERVER
+print "END_SCRIPT",END_SCRIPT
+print "-----------------------"
 
 
 while (not END_SCRIPT):
     while(RUN_SERVER):
+        print "FLAGS FROM SERVER"
+	print "DEMO:",DEMO
+        print "DEMO_DELAY",DEMO_DELAY
+        print "RUN_SERVER",RUN_SERVER
+        print "END_SCRIPT",END_SCRIPT
+	print "-----------------------"
+
         # Running server
         while (DEMO):
+	    print "FLAGS FROM DEMO"
+            print "DEMO:",DEMO
+            print "DEMO_DELAY",DEMO_DELAY
+            print "RUN_SERVER",RUN_SERVER
+            print "END_SCRIPT",END_SCRIPT
+	    print "---------------------"
             # Running in Demo mode
             for switch in GPIO_PINS:          # Set all used pins to output mode
-                GPIO.setmode(switch, GPIO.OUT)
+                GPIO.setup(switch, GPIO.OUT)
                 GPIO.output(switch, 0)
             show_demo(DEMO)
 
@@ -175,18 +210,20 @@ while (not END_SCRIPT):
             if(not DEMO):
                 show_demo(99)
                 for switch in GPIO_PINS:
-                    GPIO.setmode(switch, GPIO.IN)    # Disable all switches
+		    GPIO.output(switch, 0)
+                    GPIO.setup(switch, GPIO.IN)    # Disable all switches
             if(not RUN_SERVER):
                 break
         read_switches()
-
+	time.sleep(REFRESHTIME)
         check_flags()
         if(not RUN_SERVER):
             # Ending while(RUN_SERVER). End tasks below
             for switch in GPIO_PINS:
                 GPIO.output(switch, 0)
-                GPIO.setmode(switch, GPIO.IN)        # Turn all used pins to input
+                GPIO.setup(switch, GPIO.IN)        # Turn all used pins to input
         # while(RUN_SERVER) ends
+    time.sleep(REFRESHTIME)
     check_flags()
     # while(RUN_SERVER) ends
 
