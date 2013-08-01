@@ -17,6 +17,7 @@ CONFIGFILE = "config"  # without extension
 REFRESHTIME = 1.0  # seconds; Is overwritten by value from TABLE flags FROM DATABASE
 GPIO_PINS = [12, 11, 13, 15, 16]
 ### USER EDITABLES END
+import sys
 import time
 try:
         import RPi.GPIO as GPIO
@@ -61,6 +62,7 @@ def check_flags():
     cursor = db.cursor()
     cursor.execute("SELECT * FROM `flags`")
     rows = int(cursor.rowcount)
+    sys.stderr.write("\x1b[2J\x1b[H")
     print "Flags:"
     for i in range(0, rows):
         row = cursor.fetchone()
