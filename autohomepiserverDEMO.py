@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # Script created by Pranav Sharma (pranavsharma2504@gmail.com)
 # Initial version created on 31st July 2013 : 08:00 IST
-# Current Version: 0.11.1
-# Version Date: 31-07-2013 23:16
+# Current Version: 0.20.0
+# Version Date: 01-08-2013 10:33
 
 # NOTE: Following are required to be installed on your
 # system in order for this script to work as intended:
@@ -168,8 +168,8 @@ def read_switches():
         row = cursor.fetchone()
         switch_pin.append(int(row[3]))
         switch_state.append(1 if(row[1] == "on") else 0)  # Active HIGH output
-        switch_enabled.append(1 if(row[2] != "Disabled" or row[2] != "disabled") else 0)
-        print "\t", row[0], "\t", row[3], "\t", row[1], "\t", "Enabled" if(row[2] != "Disabled" or row[2] != "disabled") else "Disabled"
+        switch_enabled.append(not int(row[4]))	# Fetch from database
+        print "\t", row[0], "\t", row[3], "\t", row[1], "\t", "Enabled" if(switch_enabled[i]) else "Disabled"
     print "-----------------"
     cursor.close()
     db.close()
@@ -178,7 +178,8 @@ def read_switches():
 	    GPIO.setup(switch_pin[i], GPIO.OUT)
 	    GPIO.output(switch_pin[i], switch_state[i])
         else:
-            GPIO.output(switch_pin[i], 0)
+            GPIO.setup(switch_pin[i], GPIO.OUT)
+	    GPIO.output(switch_pin[i], 0)
 	    GPIO.setup(switch_pin[i], GPIO.IN)
 # read_switches() ends
 
